@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe AI</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border: 2px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 24px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div>
+  <div id="game"></div>
+  <div id="status"></div>
+  <button onclick="resetGame()">إعادة اللعبة</button>
+</div>
+
+<script>
+  const gameContainer = document.getElementById("game");
+  const statusDiv = document.getElementById("status");
+  let board = Array(9).fill("");
+  let human = "X", ai = "O", currentPlayer = human;
+
+  function startGame() {
+    board = Array(9).fill("");
+    gameContainer.innerHTML = "";
+    statusDiv.textContent = "دورك أنت (X)";
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.index = i;
+      cell.addEventListener("click", onCellClick);
+      gameContainer.appendChild(cell);
+    }
+  }
+
+  function onCellClick(e) {
+    const index = e.target.dataset.index;
+    if (board[index] !== "" || checkWinner(board)) return;
+    board[index] = human;
+    render();
+    if (!checkWinner(board) && board.includes("")) {
+      setTimeout(() => {
+        const move = bestMove();
+        board[move] = ai;
+        render();
+      }, 300);
+    }
+  }
+
+  function render() {
+    const cells = document.querySelectorAll(".cell");
+    cells.forEach((cell, i) => {
+      cell.textContent = board[i];
+    });
+    const winner = checkWinner(board);
+    if (winner) {
+      statusDiv.textContent = winner === "tie" ? "تعادل!" : `الفائز: ${winner}`;
+    }
+  }
+
+  function bestMove() {
+    let bestScore = -Infinity;
+    let move;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === "") {
+        board[i] = ai;
+        let score = minimax(board, 0, false);
+        board[i] = "";
+        if (score > bestScore) {
+          bestScore = score;
+          move = i;
+        }
+      }
+    }
+    return move;
+  }
+
+  function minimax(newBoard, depth, isMaximizing) {
+    let result = checkWinner(newBoard);
+    if (result !== null) {
+      if (result === ai) return 10 - depth;
+      if (result === human) return depth - 10;
+      if (result === "tie") return 0;
+    }
+
+    if (isMaximizing) {
+      let best = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (newBoard[i] === "") {
+          newBoard[i] = ai;
+          let score = minimax(newBoard, depth + 1, false);
+          newBoard[i] = "";
+          best = Math.max(score, best);
+        }
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (newBoard[i] === "") {
+          newBoard[i] = human;
+          let score = minimax(newBoard, depth + 1, true);
+          newBoard[i] = "";
+          best = Math.min(score, best);
+        }
+      }
+      return best;
+    }
+  }
+
+  function checkWinner(bd) {
+    const wins = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
+    ];
+    for (let combo of wins) {
+      const [a, b, c] = combo;
+      if (bd[a] && bd[a] === bd[b] && bd[a] === bd[c]) {
+        return bd[a];
+      }
+    }
+    if (!bd.includes("")) return "tie";
+    return null;
+  }
+
+  function resetGame() {
+    startGame();
+  }
+
+  startGame();
+</script>
+</body>
+</html>
